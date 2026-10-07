@@ -1,0 +1,812 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Probability Gym</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Atkinson+Hyperlegible:wght@400;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<style>
+  :root {
+    --bg: #F4F9F6;
+    --grid: rgba(14, 159, 110, 0.07);
+    --surface: #FFFFFF;
+    --ink: #1B3028;
+    --muted: #5C7268;
+    --accent: #0E9F6E;
+    --accent-soft: rgba(14, 159, 110, 0.11);
+    --on-accent: #FFFFFF;
+    --good: #1E8A4C;
+    --good-soft: rgba(30, 138, 76, 0.12);
+    --warn: #B45309;
+    --warn-soft: rgba(180, 83, 9, 0.12);
+    --bad: #D23B3B;
+    --bad-soft: rgba(210, 59, 59, 0.10);
+    --line: #D8E6DE;
+    --shadow: 0 2px 10px rgba(27, 48, 40, 0.07);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0F1915;
+      --grid: rgba(61, 213, 152, 0.055);
+      --surface: #182720;
+      --ink: #E9F2EC;
+      --muted: #96ACA0;
+      --accent: #3DD598;
+      --accent-soft: rgba(61, 213, 152, 0.14);
+      --on-accent: #0F1915;
+      --good: #4CC97E;
+      --good-soft: rgba(76, 201, 126, 0.14);
+      --warn: #E8A355;
+      --warn-soft: rgba(232, 163, 85, 0.14);
+      --bad: #F07A7A;
+      --bad-soft: rgba(240, 122, 122, 0.13);
+      --line: #28392F;
+      --shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0F1915;
+    --grid: rgba(61, 213, 152, 0.055);
+    --surface: #182720;
+    --ink: #E9F2EC;
+    --muted: #96ACA0;
+    --accent: #3DD598;
+    --accent-soft: rgba(61, 213, 152, 0.14);
+    --on-accent: #0F1915;
+    --good: #4CC97E;
+    --good-soft: rgba(76, 201, 126, 0.14);
+    --warn: #E8A355;
+    --warn-soft: rgba(232, 163, 85, 0.14);
+    --bad: #F07A7A;
+    --bad-soft: rgba(240, 122, 122, 0.13);
+    --line: #28392F;
+    --shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    color: var(--ink);
+    background:
+      linear-gradient(var(--grid) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid) 1px, transparent 1px),
+      var(--bg);
+    background-size: 28px 28px, 28px 28px, auto;
+    font-family: "Atkinson Hyperlegible", "Avenir Next", system-ui, sans-serif;
+    font-size: 17px;
+    line-height: 1.5;
+    min-height: 100vh;
+    -webkit-text-size-adjust: 100%;
+  }
+  .wrap { max-width: 620px; margin: 0 auto; padding: 18px 14px 48px; }
+
+  h1, h2, h3 { font-family: "Bricolage Grotesque", "Avenir Next", system-ui, sans-serif; text-wrap: balance; margin: 0; }
+  .mono { font-family: "IBM Plex Mono", ui-monospace, Menlo, monospace; font-variant-numeric: tabular-nums; }
+
+  .topbar { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding: 4px 2px 14px; }
+  .brand { font-family: "Bricolage Grotesque", system-ui, sans-serif; font-weight: 800; font-size: 22px; letter-spacing: -0.01em; }
+  .brand span { color: var(--accent); }
+  .navlink {
+    background: none; border: none; padding: 4px 2px; cursor: pointer;
+    color: var(--accent); font: inherit; font-weight: 700; text-decoration: underline; text-underline-offset: 3px;
+  }
+
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; box-shadow: var(--shadow); padding: 20px 18px; margin-bottom: 14px; }
+
+  .hero h1 { font-size: 29px; font-weight: 800; letter-spacing: -0.015em; line-height: 1.15; }
+  .hero p { color: var(--muted); margin: 10px 0 0; }
+  .topic-list { margin: 14px 0 0; padding: 0; list-style: none; display: flex; flex-wrap: wrap; gap: 8px; }
+  .topic-list li { font-size: 14px; font-weight: 700; color: var(--accent); background: var(--accent-soft); border-radius: 999px; padding: 4px 12px; }
+
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; text-align: center;
+    font: inherit; font-weight: 700; cursor: pointer;
+    border-radius: 12px; padding: 13px 20px; min-height: 52px;
+    border: 1px solid var(--line); background: var(--surface); color: var(--ink);
+    touch-action: manipulation;
+  }
+  .btn:focus-visible, .navlink:focus-visible, input:focus-visible, details summary:focus-visible, .opt:focus-visible {
+    outline: 3px solid var(--accent); outline-offset: 2px;
+  }
+  .btn-primary { background: var(--accent); border-color: var(--accent); color: var(--on-accent); font-size: 17px; }
+  .btn-wide { width: 100%; }
+  .btn-danger { color: var(--bad); }
+  .btn-row { display: flex; gap: 10px; margin-top: 16px; }
+  .btn-row .btn { flex: 1; }
+
+  .stat-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 4px; }
+  .stat { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 11px 13px; }
+  .stat .num { font-family: "IBM Plex Mono", monospace; font-size: 23px; font-weight: 600; }
+  .stat .lbl { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 700; }
+
+  /* ---------- Quiz ---------- */
+  .progress { position: sticky; top: 0; z-index: 5; background: var(--bg); padding: 8px 0 10px; }
+  .progress .label { display: flex; justify-content: space-between; font-size: 13px; font-weight: 700; color: var(--muted); margin-bottom: 5px; }
+  .bar { height: 8px; border-radius: 999px; background: var(--line); overflow: hidden; }
+  .bar > div { height: 100%; border-radius: 999px; background: var(--accent); transition: width 0.25s ease; }
+  @media (prefers-reduced-motion: reduce) { .bar > div { transition: none; } }
+
+  .qtopic { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent); margin-bottom: 8px; }
+  .qtext { font-size: 18px; font-weight: 400; margin: 0 0 6px; }
+  .qtext b { font-weight: 700; }
+  .qask { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 21px; font-weight: 600; margin: 10px 0 12px; }
+
+  .bagrow { display: flex; flex-wrap: wrap; gap: 5px; align-items: center; margin: 8px 0 12px; }
+  .dot { width: 20px; height: 20px; border-radius: 50%; border: 1.5px solid rgba(0,0,0,0.25); display: inline-block; }
+  .spinwrap { display: flex; justify-content: center; margin: 6px 0 12px; }
+
+  .opts { display: flex; flex-direction: column; gap: 9px; }
+  .opt {
+    font: inherit; font-size: 16px; font-weight: 700; text-align: left; cursor: pointer;
+    border: 2px solid var(--line); border-radius: 12px; background: var(--surface); color: var(--ink);
+    padding: 13px 14px; min-height: 52px; touch-action: manipulation;
+  }
+  .opt.right { border-color: var(--good); background: var(--good-soft); color: var(--good); }
+  .opt.wrong { border-color: var(--bad); background: var(--bad-soft); color: var(--bad); }
+  .opt:disabled { cursor: default; opacity: 1; }
+  .opt.dim:disabled { opacity: 0.55; }
+
+  .frac-row { display: flex; align-items: center; gap: 14px; justify-content: center; margin-top: 4px; }
+  .frac-input { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+  .frac-input input {
+    width: 110px; min-height: 52px; text-align: center;
+    font-family: "IBM Plex Mono", monospace; font-size: 22px; font-weight: 600;
+    color: var(--ink); background: var(--surface);
+    border: 2px solid var(--line); border-radius: 12px; padding: 6px;
+  }
+  .fbar { width: 120px; height: 3px; background: var(--ink); border-radius: 2px; }
+  .frac-row .btn { min-width: 108px; }
+
+  .feedback { min-height: 46px; border-radius: 10px; padding: 10px 12px; font-size: 15px; margin-top: 12px; }
+  .feedback.neutral { color: var(--muted); background: var(--surface); border: 1px dashed var(--line); }
+  .feedback.right { color: var(--good); background: var(--good-soft); font-weight: 700; }
+  .feedback.simp { color: var(--warn); background: var(--warn-soft); font-weight: 700; }
+  .feedback.wrong { color: var(--bad); background: var(--bad-soft); font-weight: 700; }
+  .feedback .why { display: block; font-weight: 400; color: var(--ink); margin-top: 4px; }
+
+  /* ---------- Results / history / study ---------- */
+  .score-hero { text-align: center; padding: 26px 18px; }
+  .score-big { font-family: "IBM Plex Mono", monospace; font-size: 54px; font-weight: 600; line-height: 1; }
+  .score-msg { font-family: "Bricolage Grotesque", system-ui, sans-serif; font-size: 22px; font-weight: 800; margin-top: 10px; }
+  .score-sub { color: var(--muted); margin-top: 4px; }
+
+  .misslist { margin: 0; padding: 0; list-style: none; }
+  .misslist li { padding: 10px 4px; border-bottom: 1px solid var(--line); font-size: 15px; }
+  .misslist li:last-child { border-bottom: none; }
+  .misslist .q { font-weight: 700; display: block; }
+  .misslist .a { color: var(--bad); font-family: "IBM Plex Mono", monospace; }
+  .misslist .cor { color: var(--good); font-weight: 700; font-family: "IBM Plex Mono", monospace; }
+  .allgood { color: var(--good); font-weight: 700; padding: 10px 4px; }
+
+  .hrow { border-bottom: 1px solid var(--line); }
+  .hrow:last-child { border-bottom: none; }
+  .hrow summary { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 12px 4px; cursor: pointer; list-style: none; }
+  .hrow summary::-webkit-details-marker { display: none; }
+  .hdate { font-size: 15px; flex: 1; }
+  .hdate small { display: block; color: var(--muted); }
+  .hscore { font-family: "IBM Plex Mono", monospace; font-weight: 600; font-size: 14px; color: var(--muted); }
+  .hpct { font-family: "IBM Plex Mono", monospace; font-weight: 600; border-radius: 999px; padding: 4px 11px; font-size: 14px; }
+  .pct-good { color: var(--good); background: var(--good-soft); }
+  .pct-mid  { color: var(--accent); background: var(--accent-soft); }
+  .pct-low  { color: var(--bad); background: var(--bad-soft); }
+  .hdetail { padding: 0 4px 12px; }
+
+  .trouble .tlabel { display: flex; justify-content: space-between; font-size: 14px; font-weight: 700; margin-bottom: 3px; }
+  .trouble .tlabel .mono { color: var(--muted); font-weight: 600; font-size: 13px; }
+  .tbar { height: 8px; border-radius: 999px; background: var(--line); overflow: hidden; margin-bottom: 9px; }
+  .tbar > div { height: 100%; border-radius: 999px; background: var(--bad); }
+
+  .study h3 { font-size: 17px; margin: 16px 0 6px; color: var(--accent); }
+  .study h3:first-of-type { margin-top: 0; }
+  .study ul { margin: 0; padding-left: 20px; }
+  .study li { margin-bottom: 5px; font-size: 15.5px; }
+  .study b { color: var(--accent); }
+  .study .flip { color: var(--bad); font-weight: 700; }
+
+  .empty { color: var(--muted); text-align: center; padding: 26px 10px; }
+  .footnote { color: var(--muted); font-size: 13px; text-align: center; margin-top: 18px; }
+  #confetti { position: fixed; inset: 0; pointer-events: none; z-index: 50; }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <div class="topbar">
+    <div class="brand">Probability <span>Gym</span></div>
+    <button class="navlink" id="navBtn"></button>
+  </div>
+  <div id="app"></div>
+</div>
+<canvas id="confetti" hidden></canvas>
+
+<script>
+"use strict";
+
+/* ================= helpers ================= */
+const rnd = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+const pick = arr => arr[rnd(0, arr.length - 1)];
+const esc = s => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;");
+function shuffle(arr) {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
+  return a;
+}
+function gcd(a, b) { return b ? gcd(b, a % b) : a; }
+function simp(n, d) { const g = gcd(n, d) || 1; return [n / g, d / g]; }
+const fr = (n, d) => n + "/" + d;
+
+/* ================= world pieces ================= */
+const COLORS = { red: "#E03131", blue: "#3B6FD4", green: "#2F9E44", yellow: "#F2C14E", purple: "#9557C8", orange: "#F2802E" };
+const ITEMS = [["marble", "marbles", "A bag of marbles"], ["Skittle", "Skittles", "A bag of Skittles"],
+               ["gumball", "gumballs", "A gumball machine"], ["jelly bean", "jelly beans", "A jar of jelly beans"]];
+
+function makeBag() {
+  const colorNames = shuffle(Object.keys(COLORS)).slice(0, rnd(3, 4));
+  const counts = {};
+  let total = 0;
+  for (const c of colorNames) { const n = rnd(1, 5); counts[c] = n; total += n; }
+  if (total < 6) { counts[colorNames[0]] += 6 - total; total = 6; }
+  while (total > 12) { for (const c of colorNames) if (total > 12 && counts[c] > 1) { counts[c]--; total--; } }
+  return { colors: colorNames, counts, total, item: pick(ITEMS) };
+}
+function bagText(bag) {
+  return bag.colors.map(c => bag.counts[c] + " " + c).join(", ");
+}
+function bagDots(bag) {
+  let html = "";
+  for (const c of bag.colors) for (let i = 0; i < bag.counts[c]; i++)
+    html += `<span class="dot" style="background:${COLORS[c]}"></span>`;
+  return `<div class="bagrow">${html}</div>`;
+}
+
+const SPIN_LETTERS = ["A", "B", "C", "D", "E", "F", "G", "H"];
+function spinnerSVG() {
+  const cx = 70, cy = 70, r = 62;
+  let paths = "", labels = "";
+  for (let i = 0; i < 8; i++) {
+    const a0 = (i * 45 - 90) * Math.PI / 180, a1 = ((i + 1) * 45 - 90) * Math.PI / 180;
+    const x0 = cx + r * Math.cos(a0), y0 = cy + r * Math.sin(a0);
+    const x1 = cx + r * Math.cos(a1), y1 = cy + r * Math.sin(a1);
+    paths += `<path d="M${cx} ${cy} L${x0.toFixed(1)} ${y0.toFixed(1)} A${r} ${r} 0 0 1 ${x1.toFixed(1)} ${y1.toFixed(1)} Z" fill="var(--surface)" stroke="currentColor" stroke-width="1.3" opacity="0.9"/>`;
+    const am = (i * 45 + 22.5 - 90) * Math.PI / 180;
+    labels += `<text x="${(cx + r * 0.68 * Math.cos(am)).toFixed(1)}" y="${(cy + r * 0.68 * Math.sin(am) + 5).toFixed(1)}" text-anchor="middle" font-size="15" font-weight="700" fill="currentColor" font-family="Atkinson Hyperlegible, sans-serif">${SPIN_LETTERS[i]}</text>`;
+  }
+  return `<svg viewBox="0 0 140 140" width="150" height="150" role="img" aria-label="spinner with letters A through H">${paths}${labels}</svg>`;
+}
+const DIE_EVENTS = [["a 3", 1], ["an even number", 3], ["an odd number", 3], ["a number greater than 4", 2],
+                    ["a prime number", 3], ["a multiple of 3", 2], ["a number less than 3", 2]];
+const SPIN_EVENTS = [["a vowel", 2], ["a consonant", 6], ["the letter B", 1], ["the letter G", 1], ["a letter in the word BED", 3]];
+
+/* ================= question generators =================
+   kind "frac": answer entered as a fraction; carries factors for self-check
+   kind "mc": options, o[0] correct */
+function fracQ(t, textHTML, askText, factors, why, extra) {
+  let n = 1, d = 1;
+  for (const [a, b] of factors) { n *= a; d *= b; }
+  const [sn, sd] = simp(n, d);
+  return Object.assign({ t, kind: "frac", textHTML, askText, factors, rawN: n, rawD: d, sn, sd, why }, extra || {});
+}
+
+function qSimpleBag() {
+  const bag = makeBag();
+  const c = pick(bag.colors);
+  return fracQ("Simple probability",
+    `${bag.item[2]} contains <b>${bagText(bag)}</b>. One ${bag.item[0]} is drawn at random.`,
+    `P(${c}) = ?`,
+    [[bag.counts[c], bag.total]],
+    `P(${c}) = ${c} ${bag.item[1]} ÷ total = ${fr(bag.counts[c], bag.total)}${simp(bag.counts[c], bag.total)[1] !== bag.total ? " → simplify → " + fr(...simp(bag.counts[c], bag.total)) : " (already in simplest form)"}.`,
+    { bag });
+}
+function qSimpleDie() {
+  const [ev, k] = pick(DIE_EVENTS);
+  return fracQ("Simple probability",
+    `A number cube (1–6) is rolled once.`,
+    `P(${ev}) = ?`,
+    [[k, 6]],
+    `${k} of the 6 faces work, so P = ${fr(k, 6)}${simp(k, 6)[1] !== 6 ? " → simplify → " + fr(...simp(k, 6)) : ""}.`);
+}
+function qSimpleSpin() {
+  const [ev, k] = pick(SPIN_EVENTS);
+  return fracQ("Simple probability",
+    `The spinner below has 8 equal sections labeled A–H. It is spun once.`,
+    `P(${ev}) = ?`,
+    [[k, 8]],
+    `${k} of the 8 letters match (${ev}), so P = ${fr(k, 8)}${simp(k, 8)[1] !== 8 ? " → simplify → " + fr(...simp(k, 8)) : ""}.`,
+    { spinner: true });
+}
+function qComplement() {
+  const bag = makeBag();
+  const c = pick(bag.colors);
+  const rest = bag.total - bag.counts[c];
+  return fracQ("Complement",
+    `${bag.item[2]} contains <b>${bagText(bag)}</b>. One ${bag.item[0]} is drawn.`,
+    `P(NOT ${c}) = ?`,
+    [[rest, bag.total]],
+    `The complement is everything that is NOT ${c}: ${bag.total} − ${bag.counts[c]} = ${rest}. P(${c}′) = ${fr(rest, bag.total)}${simp(rest, bag.total)[1] !== bag.total ? " → " + fr(...simp(rest, bag.total)) : ""}. (The ′ mark means “not”.)`,
+    { bag });
+}
+function qIndepDieSpin() {
+  const [de, dk] = pick(DIE_EVENTS);
+  const [se, sk] = pick(SPIN_EVENTS);
+  return fracQ("Independent events",
+    `A number cube is rolled and the spinner below (A–H) is spun. These are <b>independent</b> events.`,
+    `P(${de} and ${se}) = ?`,
+    [[dk, 6], [sk, 8]],
+    `Multiply the two probabilities: P(${de}) = ${fr(dk, 6)} and P(${se}) = ${fr(sk, 8)}. ${fr(dk, 6)} × ${fr(sk, 8)} = ${fr(dk * sk, 48)} → simplest form ${fr(...simp(dk * sk, 48))}.`,
+    { spinner: true });
+}
+function qIndepBag() {
+  const bag = makeBag();
+  const c1 = pick(bag.colors);
+  const c2 = rnd(0, 1) ? c1 : pick(bag.colors);
+  const ask = c1 === c2 ? `P(two ${c1} ${bag.item[1]} in a row) = ?` : `P(${c1} ${bag.item[0]}, then ${c2} ${bag.item[0]}) = ?`;
+  return fracQ("Independent events",
+    `${bag.item[2]} contains <b>${bagText(bag)}</b>. Once a ${bag.item[0]} is drawn it is <b>REPLACED</b>.`,
+    ask,
+    [[bag.counts[c1], bag.total], [bag.counts[c2], bag.total]],
+    `Replaced = independent, so the denominator stays ${bag.total}. ${fr(bag.counts[c1], bag.total)} × ${fr(bag.counts[c2], bag.total)} = ${fr(bag.counts[c1] * bag.counts[c2], bag.total * bag.total)} → simplest form ${fr(...simp(bag.counts[c1] * bag.counts[c2], bag.total * bag.total))}.`,
+    { bag });
+}
+function qDepBag() {
+  let bag = makeBag();
+  const same = rnd(0, 1) === 1;
+  let c1, c2;
+  if (same) {
+    const ok = bag.colors.filter(c => bag.counts[c] >= 2);
+    if (!ok.length) return qDepBag();
+    c1 = c2 = pick(ok);
+  } else {
+    c1 = pick(bag.colors);
+    const others = bag.colors.filter(c => c !== c1);
+    c2 = pick(others);
+  }
+  const n2 = same ? bag.counts[c1] - 1 : bag.counts[c2];
+  const ask = same ? `P(two ${c1} ${bag.item[1]} in a row) = ?` : `P(${c1} ${bag.item[0]}, then ${c2} ${bag.item[0]}) = ?`;
+  return fracQ("Dependent events",
+    `${bag.item[2]} contains <b>${bagText(bag)}</b>. Once a ${bag.item[0]} is drawn it is <b>NOT replaced</b>.`,
+    ask,
+    [[bag.counts[c1], bag.total], [n2, bag.total - 1]],
+    `NOT replaced = dependent — the denominator drops to ${bag.total - 1} on the second draw${same ? ", and only " + n2 + " " + c1 + " are left" : ""}! ${fr(bag.counts[c1], bag.total)} × ${fr(n2, bag.total - 1)} = ${fr(bag.counts[c1] * n2, bag.total * (bag.total - 1))} → simplest form ${fr(...simp(bag.counts[c1] * n2, bag.total * (bag.total - 1)))}.`,
+    { bag });
+}
+function qDepTriple() {
+  let bag = makeBag();
+  const ok2 = bag.colors.filter(c => bag.counts[c] >= 2);
+  if (!ok2.length) return qDepTriple();
+  const c2 = pick(ok2);
+  const others = bag.colors.filter(c => c !== c2);
+  const c1 = pick(others);
+  const f = [[bag.counts[c1], bag.total], [bag.counts[c2], bag.total - 1], [bag.counts[c2] - 1, bag.total - 2]];
+  return fracQ("Dependent events",
+    `${bag.item[2]} contains <b>${bagText(bag)}</b>. Once a ${bag.item[0]} is drawn it is <b>NOT replaced</b>. (Challenge: three draws!)`,
+    `P(${c1} ${bag.item[0]}, then two ${c2} ${bag.item[1]} in a row) = ?`,
+    f,
+    `Three draws, denominator dropping each time: ${f.map(x => fr(x[0], x[1])).join(" × ")} = ${fr(f[0][0] * f[1][0] * f[2][0], f[0][1] * f[1][1] * f[2][1])} → simplest form ${fr(...simp(f[0][0] * f[1][0] * f[2][0], f[0][1] * f[1][1] * f[2][1]))}.`,
+    { bag });
+}
+
+/* concept + likelihood multiple choice */
+function qConcept() {
+  const pool = [
+    { q: "A marble is drawn and REPLACED, then another is drawn. These events are…", o: ["Independent", "Dependent", "Complementary", "Impossible"], why: "Replaced = the bag is back to normal = the events are NOT related = independent." },
+    { q: "A Skittle is drawn and EATEN (not replaced), then another is drawn. These events are…", o: ["Dependent", "Independent", "Certain", "Simple"], why: "Not replaced = the second draw is affected by the first = dependent." },
+    { q: "In DEPENDENT events, what happens to the denominator on the second draw?", o: ["It goes down (the total changed)", "It stays the same", "It doubles", "It becomes zero"], why: "One item left the bag, so the total — the denominator — drops by 1." },
+    { q: "A COMPOUND event is…", o: ["Two or more simple events", "An event that cannot happen", "An event with probability 1", "The opposite of an event"], why: "Compound = 2 or more simple events, like a roll AND a spin." },
+    { q: "To find the probability of a compound event, you ____ the probabilities.", o: ["Multiply", "Add", "Subtract", "Divide"], why: "P(A and B) = P(A) × P(B)." },
+    { q: "Probability = …", o: ["Number of likely outcomes ÷ total outcomes", "Total outcomes ÷ likely outcomes", "Likely outcomes × total outcomes", "Total outcomes − likely outcomes"], why: "Straight from the notes: likely outcomes over total outcomes." },
+    { q: "What does P(orange′) mean? (Note the little tick mark!)", o: ["The probability of NOT orange", "The probability of orange", "Orange is certain", "Orange happens twice"], why: "The ′ (prime) mark means the COMPLEMENT — what will NOT occur." },
+    { q: "P(orange) = 1/5. What is P(NOT orange)?", o: ["4/5", "1/5", "5/4", "0"], why: "Complements add to 1: 1 − 1/5 = 4/5." },
+  ];
+  return Object.assign({ t: "Concepts", kind: "mc" }, pick(pool));
+}
+function qLikelihood() {
+  const pool = [
+    { q: "An event has probability 0. The event is…", o: ["Impossible", "Certain", "Likely", "Unlikely"], why: "0 = impossible. 1 = certain. 1/2 = equally likely as not." },
+    { q: "An event has probability 1 (that's 100%). The event is…", o: ["Certain", "Impossible", "Unlikely", "A coin flip"], why: "Probability 1 = 100% = certain to happen." },
+    { q: "An event has probability 1/2. The event is…", o: ["As likely to happen as not (50-50)", "Impossible", "Certain", "Very unlikely"], why: "1/2 = 50% = right in the middle of the probability line." },
+    { q: "An event has probability 1/8. The event is…", o: ["Unlikely", "Likely", "Certain", "Impossible"], why: "1/8 is close to 0 on the probability line — unlikely (but possible!)." },
+    { q: "An event has probability 7/8. The event is…", o: ["Likely", "Unlikely", "Impossible", "Exactly 50-50"], why: "7/8 is close to 1 — likely (but not certain!)." },
+  ];
+  return Object.assign({ t: "Concepts", kind: "mc" }, pick(pool));
+}
+
+/* A quiz mirrors the notes + worksheet: simple → complement → concepts → compound. */
+function buildQuiz() {
+  return [
+    pick([qSimpleBag, qSimpleDie, qSimpleSpin])(), qSimpleBag(), pick([qSimpleDie, qSimpleSpin])(),
+    qComplement(), qComplement(),
+    qLikelihood(), qConcept(),
+    qIndepDieSpin(), qIndepBag(), qIndepBag(),
+    qDepBag(), qDepBag(), qDepTriple(),
+  ];
+}
+const QUIZ_LEN = 13;
+
+/* ================= storage (same pattern as the other apps) ================= */
+const KEY = "probability-gym-history";
+const API = "/api/scores";
+let apiSynced = false;
+
+function loadLocal() {
+  try { return JSON.parse(localStorage.getItem(KEY)) || []; } catch { return []; }
+}
+function saveLocal(h) {
+  try { localStorage.setItem(KEY, JSON.stringify(h)); } catch {}
+}
+function loadHistory() { return loadLocal(); }
+function postRecord(rec) {
+  return fetch(API, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(rec) });
+}
+function addRecord(rec) {
+  const h = loadLocal(); h.push(rec); saveLocal(h);
+  postRecord(rec).catch(() => {});
+}
+function clearHistory() {
+  saveLocal([]);
+  if (apiSynced) fetch(API, { method: "DELETE" }).catch(() => {});
+}
+async function syncApi() {
+  try {
+    const res = await fetch(API);
+    if (!res.ok) throw new Error();
+    const server = await res.json();
+    if (!Array.isArray(server)) throw new Error();
+    const seen = new Set(server.map(r => r.id || r.date));
+    const missing = loadLocal().filter(r => !seen.has(r.id || r.date));
+    for (const r of missing) { try { await postRecord(r); } catch {} }
+    const merged = server.concat(missing).sort((a, b) => String(a.date).localeCompare(String(b.date)));
+    saveLocal(merged);
+    apiSynced = true;
+    if (state.screen === "home" || state.screen === "history") render();
+  } catch { apiSynced = false; }
+}
+
+/* ================= state ================= */
+const app = document.getElementById("app");
+const navBtn = document.getElementById("navBtn");
+let state = { screen: "home", quiz: [], idx: 0, right: 0, misses: [], locked: false };
+let timers = [];
+function later(fn, ms) { timers.push(setTimeout(fn, ms)); }
+function clearTimers() { timers.forEach(clearTimeout); timers = []; }
+
+function go(screen) {
+  clearTimers();
+  state.screen = screen;
+  if (screen === "home" || screen === "history") syncApi();
+  render();
+  window.scrollTo(0, 0);
+}
+
+navBtn.addEventListener("click", () => {
+  if (state.screen === "quiz") {
+    if (confirm("Quit this quiz? It won't be scored.")) go("home");
+  } else if (state.screen === "home") {
+    go("history");
+  } else {
+    go("home");
+  }
+});
+
+function pctClass(p) { return p >= 90 ? "pct-good" : p >= 70 ? "pct-mid" : "pct-low"; }
+
+function startQuiz() {
+  state.quiz = shuffle(buildQuiz());
+  state.idx = 0;
+  state.right = 0;
+  state.misses = [];
+  go("quiz");
+}
+
+function render() {
+  navBtn.textContent = state.screen === "quiz" ? "Quit" : state.screen === "home" ? "History" : "Home";
+  if (state.screen === "home") renderHome();
+  else if (state.screen === "quiz") renderQuiz();
+  else if (state.screen === "results") renderResults();
+  else if (state.screen === "study") renderStudy();
+  else renderHistory();
+}
+
+function renderHome() {
+  const h = loadHistory();
+  const best = h.length ? Math.max(...h.map(r => r.percent)) : null;
+  const avg = h.length ? Math.round(h.reduce((a, r) => a + r.percent, 0) / h.length) : null;
+  app.innerHTML = `
+    <div class="card hero">
+      <h1>What are the odds, VJ?</h1>
+      <p>Every quiz is ${QUIZ_LEN} freshly generated problems — new bags, new spinners, new numbers every single time. Answers go in as fractions, just like the test.</p>
+      <ul class="topic-list">
+        <li>Simple probability</li><li>Complements</li><li>Independent</li><li>Dependent</li><li>Concepts</li>
+      </ul>
+      <div class="btn-row"><button class="btn btn-primary btn-wide" id="startBtn">Start a practice quiz</button></div>
+      <div class="btn-row"><button class="btn btn-wide" id="studyBtn">Read the cheat sheet</button></div>
+    </div>
+    <div class="stat-row">
+      <div class="stat"><div class="num mono">${h.length}</div><div class="lbl">Quizzes</div></div>
+      <div class="stat"><div class="num mono">${best === null ? "–" : best + "%"}</div><div class="lbl">Best</div></div>
+      <div class="stat"><div class="num mono">${avg === null ? "–" : avg + "%"}</div><div class="lbl">Average</div></div>
+    </div>`;
+  document.getElementById("startBtn").addEventListener("click", startQuiz);
+  document.getElementById("studyBtn").addEventListener("click", () => go("study"));
+}
+
+function advance() {
+  clearTimers();
+  state.idx++;
+  if (state.idx >= state.quiz.length) finishQuiz();
+  else render();
+}
+
+function renderQuiz() {
+  const q = state.quiz[state.idx];
+  const n = state.quiz.length;
+  const isMC = q.kind === "mc";
+
+  let answerHTML;
+  let opts = [];
+  if (isMC) {
+    opts = shuffle(q.o.map((text, i) => ({ text, correct: i === 0 })));
+    answerHTML = `<div class="opts">${opts.map((o, i) =>
+      `<button class="opt" data-i="${i}">${esc(o.text)}</button>`).join("")}</div>`;
+  } else {
+    answerHTML = `<div class="frac-row">
+        <div class="frac-input">
+          <input id="numIn" type="text" inputmode="numeric" autocomplete="off" aria-label="Numerator (top number)" placeholder="top">
+          <div class="fbar"></div>
+          <input id="denIn" type="text" inputmode="numeric" autocomplete="off" aria-label="Denominator (bottom number)" placeholder="bottom">
+        </div>
+        <button class="btn btn-primary" id="checkBtn">Check</button>
+      </div>`;
+  }
+
+  app.innerHTML = `
+    <div class="progress">
+      <div class="label"><span>Problem ${state.idx + 1} of ${n}</span><span>${esc(q.t)}</span></div>
+      <div class="bar"><div style="width:${((state.idx + 1) / n) * 100}%"></div></div>
+    </div>
+    <div class="card">
+      <div class="qtopic">${esc(q.t)}</div>
+      ${q.kind === "frac" ? `<p class="qtext">${q.textHTML}</p>
+        ${q.bag ? bagDots(q.bag) : ""}
+        ${q.spinner ? `<div class="spinwrap">${spinnerSVG()}</div>` : ""}
+        <p class="qask">${esc(q.askText)}</p>` : `<p class="qtext" style="font-weight:700;font-size:19px">${esc(q.q)}</p>`}
+      ${answerHTML}
+      <div class="feedback neutral" id="feedback">${isMC ? "Tap the best answer." : "Type the fraction — top number, bottom number. Simplest form is best!"}</div>
+    </div>`;
+
+  const feedback = document.getElementById("feedback");
+
+  if (isMC) {
+    const showWhy = ok => {
+      feedback.className = "feedback " + (ok ? "right" : "wrong");
+      feedback.innerHTML = (ok ? "Correct! ✓" : `Not quite — the answer is <b>${esc(q.o[0])}</b>.`) +
+        `<span class="why">${esc(q.why)}</span>` +
+        (ok ? "" : ` <button class="navlink" id="nextBtn">Next →</button>`);
+      if (!ok) document.getElementById("nextBtn").addEventListener("click", advance);
+    };
+    app.querySelectorAll(".opt").forEach(btn => {
+      btn.addEventListener("click", () => {
+        if (state.locked) return;
+        state.locked = true;
+        const chosen = opts[Number(btn.dataset.i)];
+        app.querySelectorAll(".opt").forEach((b, i) => {
+          b.disabled = true;
+          if (opts[i].correct) b.classList.add("right");
+          else if (b === btn) b.classList.add("wrong");
+          else b.classList.add("dim");
+        });
+        if (chosen.correct) {
+          state.right++;
+          showWhy(true);
+          later(() => { state.locked = false; advance(); }, 1500);
+        } else {
+          state.misses.push({ q: q.q, a: chosen.text, c: q.o[0] });
+          showWhy(false);
+          state.locked = false;
+        }
+      });
+    });
+  } else {
+    const numIn = document.getElementById("numIn");
+    const denIn = document.getElementById("denIn");
+    const checkBtn = document.getElementById("checkBtn");
+    const submit = () => {
+      if (state.locked) return;
+      const un = Number(numIn.value.replace(/[^\d]/g, ""));
+      const ud = Number(denIn.value.replace(/[^\d]/g, ""));
+      if (!numIn.value.trim()) { numIn.focus(); return; }
+      if (!denIn.value.trim() || ud === 0) { denIn.focus(); return; }
+      state.locked = true;
+      numIn.disabled = denIn.disabled = checkBtn.disabled = true;
+      const corTxt = fr(q.sn, q.sd);
+      const equivalent = un * q.sd === q.sn * ud;
+      const simplest = un === q.sn && ud === q.sd;
+      if (equivalent && simplest) {
+        state.right++;
+        feedback.className = "feedback right";
+        feedback.innerHTML = `Correct! ✓ <span class="why">${esc(q.why)}</span>`;
+        later(() => { state.locked = false; advance(); }, 1500);
+      } else if (equivalent) {
+        state.right++;
+        feedback.className = "feedback simp";
+        feedback.innerHTML = `Right value! ✓ …but on the test, write it in <b>simplest form: ${esc(corTxt)}</b>.` +
+          `<span class="why">${esc(q.why)}</span> <button class="navlink" id="nextBtn">Next →</button>`;
+        document.getElementById("nextBtn").addEventListener("click", advance);
+      } else {
+        state.misses.push({ q: q.askText + "  (" + q.textHTML.replace(/<[^>]+>/g, "") + ")", a: fr(un, ud), c: corTxt });
+        feedback.className = "feedback wrong";
+        feedback.innerHTML = `Not quite — the answer is <b class="mono">${esc(corTxt)}</b>.` +
+          `<span class="why">${esc(q.why)}</span> <button class="navlink" id="nextBtn">Next →</button>`;
+        document.getElementById("nextBtn").addEventListener("click", advance);
+      }
+    };
+    checkBtn.addEventListener("click", submit);
+    denIn.addEventListener("keydown", e => { if (e.key === "Enter") submit(); });
+    numIn.addEventListener("keydown", e => { if (e.key === "Enter") denIn.focus(); });
+  }
+  state.locked = false;
+}
+
+function finishQuiz() {
+  clearTimers();
+  const total = state.quiz.length;
+  const percent = Math.round((state.right / total) * 100);
+  const rec = {
+    id: Date.now() + "-" + Math.random().toString(36).slice(2, 8),
+    date: new Date().toISOString(),
+    right: state.right, total, percent,
+    misses: state.misses.map(m => ({ q: String(m.q).slice(0, 190), a: String(m.a).slice(0, 70), c: String(m.c).slice(0, 110) })),
+  };
+  addRecord(rec);
+  state.lastResult = rec;
+  go("results");
+}
+
+function missListHTML(misses) {
+  return misses.length
+    ? `<ul class="misslist">${misses.map(m =>
+        `<li><span class="q">${esc(m.q)}</span>
+         <span class="a">${esc(m.a)}</span> → <span class="cor">${esc(m.c)}</span></li>`).join("")}</ul>`
+    : `<div class="allgood">Nothing missed — perfect round!</div>`;
+}
+
+function renderResults() {
+  const r = state.lastResult;
+  const msg = r.percent === 100 ? "Perfect! The odds were ever in your favor! \u{1F3C6}"
+    : r.percent >= 90 ? "Excellent — you're ready for Friday!"
+    : r.percent >= 70 ? "Good work — review the misses below."
+    : "Keep training — read the cheat sheet, then go again.";
+  app.innerHTML = `
+    <div class="card score-hero">
+      <div class="score-big mono" style="color:${r.percent >= 90 ? "var(--good)" : r.percent >= 70 ? "var(--accent)" : "var(--bad)"}">${r.right}/${r.total}</div>
+      <div class="score-msg">${msg}</div>
+      <div class="score-sub">${r.percent}% · saved to history</div>
+      <div class="btn-row">
+        <button class="btn" id="studyBtn">Cheat sheet</button>
+        <button class="btn btn-primary" id="againBtn">New quiz</button>
+      </div>
+    </div>
+    <div class="card">
+      <h2 style="font-size:20px">${r.misses.length ? "What you missed" : "Clean sheet"}</h2>
+      ${missListHTML(r.misses)}
+    </div>`;
+  document.getElementById("againBtn").addEventListener("click", startQuiz);
+  document.getElementById("studyBtn").addEventListener("click", () => go("study"));
+  if (r.percent >= 90) confetti();
+}
+
+function renderHistory() {
+  const h = loadHistory().slice().reverse();
+  const missCount = {};
+  h.forEach(r => (r.misses || []).forEach(m => { missCount[m.q] = (missCount[m.q] || 0) + 1; }));
+  const worst = Object.entries(missCount).sort((a, b) => b[1] - a[1]).slice(0, 6);
+  const maxMiss = worst.length ? worst[0][1] : 1;
+
+  const rows = h.map(r => {
+    const d = new Date(r.date);
+    const date = d.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" });
+    const time = d.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
+    return `<details class="hrow">
+        <summary>
+          <div class="hdate">${date}<small>${time}</small></div>
+          <span class="hscore">${r.right}/${r.total}</span>
+          <span class="hpct ${pctClass(r.percent)}">${r.percent}%</span>
+        </summary>
+        <div class="hdetail">${missListHTML(r.misses || [])}</div>
+      </details>`;
+  }).join("");
+
+  app.innerHTML = `
+    <div class="card">
+      <h2 style="font-size:22px">Quiz history</h2>
+      <p style="color:var(--muted);font-size:14px;margin:6px 0 4px">Tap a quiz to see exactly what was missed.</p>
+      ${h.length ? rows : `<div class="empty">No quizzes yet — take your first one!</div>`}
+    </div>
+    ${worst.length ? `<div class="card trouble"><h2 style="font-size:22px">Trouble problems</h2>
+      <p style="color:var(--muted);font-size:14px;margin:6px 0 10px">Missed most often — drill these before Friday.</p>
+      ${worst.map(([qq, nn]) =>
+        `<div class="tlabel"><span style="max-width:75%">${esc(qq)}</span><span class="mono">${nn}×</span></div>
+         <div class="tbar"><div style="width:${(nn / maxMiss) * 100}%"></div></div>`).join("")}</div>` : ""}
+    <div class="btn-row"><button class="btn btn-primary btn-wide" id="startBtn">Start a practice quiz</button></div>
+    ${h.length ? `<div class="btn-row"><button class="btn btn-danger btn-wide" id="clearBtn">Clear history</button></div>` : ""}
+    <p class="footnote">${apiSynced
+      ? "Scores sync — open this same link on any phone or computer to see them."
+      : "History is saved on this device."}</p>`;
+
+  document.getElementById("startBtn").addEventListener("click", startQuiz);
+  const clearBtn = document.getElementById("clearBtn");
+  if (clearBtn) clearBtn.addEventListener("click", () => {
+    if (confirm("Delete all saved scores? This can't be undone.")) { clearHistory(); render(); }
+  });
+}
+
+function renderStudy() {
+  app.innerHTML = `
+    <div class="card study">
+      <h2 style="font-size:22px;margin-bottom:4px">The probability cheat sheet</h2>
+      <h3>The one big formula</h3>
+      <ul>
+        <li><b>Probability = likely outcomes ÷ total outcomes.</b> P(orange) with 2 orange out of 10 = 2/10 = <b>1/5</b>.</li>
+        <li>Always <b>simplify</b> your fraction at the end!</li>
+      </ul>
+      <h3>The probability line</h3>
+      <ul>
+        <li><b>0</b> = impossible · <b>1/2</b> = 50-50 · <b>1</b> = certain. Close to 0 = unlikely; close to 1 = likely.</li>
+      </ul>
+      <h3>Complement (the ′ mark)</h3>
+      <ul>
+        <li><b>P(orange′) = P(NOT orange)</b> — everything else in the bag.</li>
+        <li>The two always add to 1: if P(orange) = 2/10, then P(not orange) = 8/10 = 4/5.</li>
+      </ul>
+      <h3>Compound events = MULTIPLY</h3>
+      <ul>
+        <li><b>Compound</b> = 2 or more simple events. P(A and B) = P(A) × P(B).</li>
+        <li><b>Independent</b> (not related — drawn and REPLACED, or a die AND a spinner): denominators <b>stay the same</b>. P(3 and a vowel) = 1/6 × 2/8 = <b>1/24</b>.</li>
+        <li><span class="flip">Dependent (NOT replaced): the denominator DROPS by one each draw — and if you want the same color again, the top drops too!</span> P(purple then green), 10 Skittles: 1/10 × 4/9 = 4/90 = <b>2/45</b>.</li>
+        <li>Three draws? Keep going: 3/10 × 4/9 × 3/8 = 36/720 = <b>1/20</b>.</li>
+      </ul>
+      <h3>Spot the type in the words</h3>
+      <ul>
+        <li>“It is replaced” → <b>independent</b>, same denominators.</li>
+        <li>“NOT replaced” / “eaten” → <b>dependent</b>, shrinking denominators.</li>
+        <li>Different gadgets (cube + spinner) → always independent.</li>
+      </ul>
+      <div class="btn-row"><button class="btn btn-primary btn-wide" id="startBtn">I'm ready — quiz me</button></div>
+    </div>`;
+  document.getElementById("startBtn").addEventListener("click", startQuiz);
+}
+
+/* ================= confetti ================= */
+function confetti() {
+  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  const cv = document.getElementById("confetti");
+  cv.hidden = false;
+  cv.width = innerWidth; cv.height = innerHeight;
+  const ctx = cv.getContext("2d");
+  const colors = ["#0E9F6E", "#3DD598", "#F2C14E", "#3B6FD4", "#E03131"];
+  const bits = Array.from({ length: 120 }, () => ({
+    x: Math.random() * cv.width, y: -20 - Math.random() * cv.height * 0.5,
+    vy: 2 + Math.random() * 3, vx: -1 + Math.random() * 2,
+    s: 5 + Math.random() * 6, r: Math.random() * Math.PI, vr: -0.1 + Math.random() * 0.2,
+    col: colors[Math.floor(Math.random() * colors.length)],
+  }));
+  let frames = 0;
+  (function loop() {
+    ctx.clearRect(0, 0, cv.width, cv.height);
+    for (const b of bits) {
+      b.x += b.vx; b.y += b.vy; b.r += b.vr;
+      ctx.save(); ctx.translate(b.x, b.y); ctx.rotate(b.r);
+      ctx.fillStyle = b.col; ctx.fillRect(-b.s / 2, -b.s / 2, b.s, b.s * 0.6);
+      ctx.restore();
+    }
+    if (++frames < 220) requestAnimationFrame(loop);
+    else { ctx.clearRect(0, 0, cv.width, cv.height); cv.hidden = true; }
+  })();
+}
+
+render();
+syncApi();
+</script>
+</body>
+</html>
